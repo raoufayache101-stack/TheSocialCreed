@@ -5,743 +5,400 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Social Creed — Reel</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
-  :root {
-    --purple: #7B5EA7;
-    --purple-light: #9D7FCA;
-    --purple-bright: #B794F6;
-    --purple-glow: rgba(123, 94, 167, 0.4);
-    --purple-deep: #4A2D7A;
-    --dark: #050508;
-    --dark-card: #0E0E14;
-    --white: #F5F5F7;
-    --grey: #6B6B7B;
-  }
+:root {
+  --p1:#B794F6; --p2:#7B5EA7; --p3:#4A2D7A; --p4:#2D1B4E;
+  --glow:rgba(183,148,246,0.5); --glow2:rgba(123,94,167,0.3);
+  --w:#F5F5F7; --g:#6B6B7B; --d:#050508; --card:#0C0C14;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:'Outfit',sans-serif}
+.C{width:1080px;height:1920px;background:var(--d);position:relative;overflow:hidden;transform-origin:center}
+@media(max-height:1920px){.C{transform:scale(calc(100vh/1920))}}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ═══ GLOBAL LAYERS ═══ */
+canvas.bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+.grain{position:absolute;inset:-50%;width:200%;height:200%;z-index:90;pointer-events:none;opacity:0.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:gShift .4s steps(4) infinite}
+@keyframes gShift{0%{transform:translate(0)}25%{transform:translate(-8px,8px)}50%{transform:translate(4px,-6px)}75%{transform:translate(8px,3px)}}
 
-  body {
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    overflow: hidden;
-    font-family: 'Inter', sans-serif;
-  }
+/* Vignette */
+.vignette{position:absolute;inset:0;z-index:80;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.7) 100%)}
 
-  .canvas {
-    width: 1080px;
-    height: 1920px;
-    background: var(--dark);
-    position: relative;
-    overflow: hidden;
-    transform-origin: center center;
-  }
+/* ═══ TRANSITION OVERLAYS ═══ */
+.ov{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:0}
+.flash{background:var(--p1)}
+.flash.go{animation:flashPop .35s ease-out forwards}
+@keyframes flashPop{0%{opacity:0}12%{opacity:.85}100%{opacity:0}}
 
-  /* ═══════════════════════════════════════
-     PARTICLE SYSTEM
-     ═══════════════════════════════════════ */
-  #particleCanvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
+.wipeH{background:linear-gradient(90deg,var(--p3),var(--p1),var(--p3));transform:translateX(-110%);opacity:1}
+.wipeH.go{animation:wH .55s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes wH{0%{transform:translateX(-110%)}42%{transform:translateX(0)}58%{transform:translateX(0)}100%{transform:translateX(110%)}}
 
-  /* ═══════════════════════════════════════
-     AMBIENT GLOW ORBS
-     ═══════════════════════════════════════ */
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0;
-    z-index: 0;
-    will-change: transform, opacity;
-  }
-  .orb-1 {
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(123,94,167,0.5), transparent 70%);
-    top: -200px; left: -200px;
-    animation: orbDrift1 12s ease-in-out infinite;
-  }
-  .orb-2 {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(74,45,122,0.4), transparent 70%);
-    bottom: -150px; right: -150px;
-    animation: orbDrift2 15s ease-in-out infinite;
-  }
-  .orb-3 {
-    width: 350px; height: 350px;
-    background: radial-gradient(circle, rgba(157,127,202,0.25), transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    animation: orbPulse 6s ease-in-out infinite;
-  }
-  .orb.on { opacity: 1; transition: opacity 2s ease; }
+.wipeV{background:linear-gradient(180deg,var(--p3),var(--p1),var(--p3));transform:translateY(-110%);opacity:1}
+.wipeV.go{animation:wV .55s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes wV{0%{transform:translateY(-110%)}42%{transform:translateY(0)}58%{transform:translateY(0)}100%{transform:translateY(110%)}}
 
-  @keyframes orbDrift1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(100px, 150px) scale(1.1); }
-    66% { transform: translate(-50px, 80px) scale(0.95); }
-  }
-  @keyframes orbDrift2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-80px, -120px) scale(1.15); }
-  }
-  @keyframes orbPulse {
-    0%, 100% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.3; }
-    50% { transform: translate(-50%,-50%) scale(1.3); opacity: 0.7; }
-  }
+.shutter{background:var(--d);opacity:1;clip-path:inset(50% 0);transition:none}
+.shutter.go{animation:shutterOpen .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes shutterOpen{0%{clip-path:inset(50% 0)}100%{clip-path:inset(100% 0 0 0);opacity:0}}
 
-  /* ═══════════════════════════════════════
-     NOISE GRAIN OVERLAY
-     ═══════════════════════════════════════ */
-  .grain {
-    position: absolute;
-    inset: -50%;
-    width: 200%; height: 200%;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    z-index: 50;
-    pointer-events: none;
-    animation: grainShift 0.5s steps(3) infinite;
-  }
-  @keyframes grainShift {
-    0% { transform: translate(0, 0); }
-    33% { transform: translate(-10px, 10px); }
-    66% { transform: translate(5px, -5px); }
-    100% { transform: translate(10px, 5px); }
-  }
+.glitchOv{background:var(--p2);mix-blend-mode:screen;opacity:0}
+.glitchOv.go{animation:gOv .4s steps(4) forwards}
+@keyframes gOv{0%{opacity:0;transform:translate(30px,-15px) scaleX(1.1)}25%{opacity:.6;transform:translate(-15px,8px) scaleX(.95)}50%{opacity:.3;transform:translate(8px,-4px)}75%{opacity:.1;transform:translate(-3px,2px)}100%{opacity:0;transform:none}}
 
-  /* ═══════════════════════════════════════
-     SCENE BASE
-     ═══════════════════════════════════════ */
-  .scene {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    opacity: 0;
-    pointer-events: none;
-    will-change: opacity, transform;
-  }
-  .scene.enter-fade { animation: enterFade 0.7s ease forwards; }
-  .scene.enter-zoom { animation: enterZoom 0.8s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .scene.enter-slide-up { animation: enterSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .scene.enter-glitch { animation: enterGlitch 0.5s ease forwards; }
-  .scene.exit-fade { animation: exitFade 0.4s ease forwards; }
-  .scene.exit-zoom { animation: exitZoom 0.5s ease forwards; }
-  .scene.exit-blur { animation: exitBlur 0.4s ease forwards; }
+/* ═══ SCENES ═══ */
+.S{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;opacity:0;pointer-events:none}
+.S.on{opacity:1}
+.S.out{animation:sOut .35s ease forwards}
+@keyframes sOut{to{opacity:0;transform:scale(.92);filter:blur(12px)}}
 
-  @keyframes enterFade { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes enterZoom { from { opacity: 0; transform: scale(1.3); } to { opacity: 1; transform: scale(1); } }
-  @keyframes enterSlideUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes enterGlitch {
-    0% { opacity: 0; transform: translate(20px, -10px) skewX(10deg); }
-    30% { opacity: 1; transform: translate(-10px, 5px) skewX(-5deg); }
-    60% { transform: translate(5px, -3px) skewX(2deg); }
-    100% { transform: translate(0) skewX(0); opacity: 1; }
-  }
-  @keyframes exitFade { from { opacity: 1; } to { opacity: 0; } }
-  @keyframes exitZoom { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.8); } }
-  @keyframes exitBlur { from { opacity: 1; filter: blur(0); } to { opacity: 0; filter: blur(20px); } }
+/* ═══════════════════════════════════════
+   SCENE 1: OPENING — Glitch-type reveal
+   Each letter glitches in individually
+   ═══════════════════════════════════════ */
+.s1{padding:0 80px}
+.s1 .word{display:inline-block;margin-right:22px}
+.s1 .ch{
+  display:inline-block;font-size:50px;font-weight:300;color:var(--w);
+  letter-spacing:5px;text-transform:uppercase;
+  opacity:0;position:relative;
+}
+.s1 .ch.in{animation:glitchChar .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes glitchChar{
+  0%{opacity:0;transform:translate(20px,-10px) skewX(30deg);color:var(--p1);text-shadow:0 0 20px var(--p1)}
+  30%{opacity:1;transform:translate(-8px,5px) skewX(-15deg);color:var(--p1)}
+  60%{transform:translate(3px,-2px) skewX(5deg);color:var(--w)}
+  100%{opacity:1;transform:none;color:var(--w);text-shadow:none}
+}
+.s1 .cursor{display:inline-block;width:3px;height:50px;background:var(--p1);vertical-align:middle;animation:blink .6s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.s1 .sub-line{position:absolute;bottom:35%;left:50%;transform:translateX(-50%);width:0;height:1px;background:linear-gradient(90deg,transparent,var(--p1),transparent)}
+.s1 .sub-line.in{animation:lineW 1s .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes lineW{to{width:500px}}
 
-  /* ═══════════════════════════════════════
-     TRANSITION FLASH
-     ═══════════════════════════════════════ */
-  .flash-overlay {
-    position: absolute;
-    inset: 0;
-    background: var(--purple);
-    z-index: 30;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .flash-overlay.fire {
-    animation: flashBang 0.5s ease-out forwards;
-  }
-  @keyframes flashBang {
-    0% { opacity: 0; }
-    15% { opacity: 0.7; }
-    100% { opacity: 0; }
-  }
+/* ═══════════════════════════════════════
+   SCENE 2: LOGO — Explosive particle burst
+   Logo forms from scattered fragments
+   ═══════════════════════════════════════ */
+.s2{position:relative}
+.s2-logo{display:flex;flex-direction:column;align-items:center;gap:35px}
+.s2-icon{width:200px;height:200px;opacity:0;filter:blur(30px) brightness(3);transform:scale(3)}
+.s2-icon.in{animation:logoBurst 1.2s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes logoBurst{
+  0%{opacity:0;filter:blur(30px) brightness(3);transform:scale(3)}
+  40%{opacity:1;filter:blur(0) brightness(1.5);transform:scale(.9)}
+  70%{filter:blur(0) brightness(1);transform:scale(1.08)}
+  100%{opacity:1;filter:blur(0) brightness(1);transform:scale(1)}
+}
+.s2-icon svg{width:100%;height:100%}
+.s2-txt{font-family:'Space Grotesk',sans-serif;font-size:88px;font-weight:700;color:var(--w);text-align:center;line-height:1;opacity:0;letter-spacing:-1px}
+.s2-txt .letter{display:inline-block;opacity:0;transform:translateY(80px) rotateX(90deg);filter:blur(8px)}
+.s2-txt .letter.in{animation:letterFlip .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes letterFlip{to{opacity:1;transform:none;filter:none}}
+/* Expanding rings */
+.s2-ring{position:absolute;top:43%;left:50%;width:0;height:0;border:2px solid var(--p1);border-radius:50%;transform:translate(-50%,-50%);opacity:0}
+.s2-ring.in{animation:ringBoom 1.5s ease-out forwards}
+@keyframes ringBoom{0%{width:0;height:0;opacity:.8}100%{width:800px;height:800px;opacity:0}}
+/* Radial light rays */
+.s2-rays{position:absolute;top:40%;left:50%;width:600px;height:600px;transform:translate(-50%,-50%);opacity:0}
+.s2-rays.in{animation:raysIn 2s ease forwards}
+@keyframes raysIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0)}50%{opacity:.4}100%{opacity:0;transform:translate(-50%,-50%) scale(2) rotate(90deg)}}
 
-  /* Horizontal wipe */
-  .wipe-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, var(--purple-deep), var(--purple));
-    z-index: 30;
-    transform: translateX(-105%);
-    pointer-events: none;
-  }
-  .wipe-overlay.fire {
-    animation: wipeAcross 0.6s cubic-bezier(0.7,0,0.3,1) forwards;
-  }
-  @keyframes wipeAcross {
-    0% { transform: translateX(-105%); }
-    45% { transform: translateX(0%); }
-    55% { transform: translateX(0%); }
-    100% { transform: translateX(105%); }
-  }
+/* ═══════════════════════════════════════
+   SCENE 3: CONTENT CREATION — Split slam
+   Words split from center and slam together
+   ═══════════════════════════════════════ */
+.s3{text-align:center;position:relative}
+.s3-top,.s3-bot{font-family:'Space Grotesk',sans-serif;font-size:110px;font-weight:700;text-transform:uppercase;letter-spacing:-3px;line-height:.95}
+.s3-top{color:var(--w);opacity:0;transform:translateY(-200px) scaleY(2);filter:blur(15px)}
+.s3-top.in{animation:slamDown .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes slamDown{to{opacity:1;transform:none;filter:none}}
+.s3-bot{color:transparent;-webkit-text-stroke:2px var(--p1);opacity:0;transform:translateY(200px) scaleY(2);filter:blur(15px)}
+.s3-bot.in{animation:slamUp .6s .15s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes slamUp{to{opacity:1;transform:none;filter:none}}
+.s3-impact{position:absolute;top:50%;left:50%;width:0;height:4px;background:var(--p1);transform:translate(-50%,-50%);box-shadow:0 0 40px var(--glow),0 0 80px var(--glow)}
+.s3-impact.in{animation:impactLine .4s .2s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes impactLine{to{width:900px}}
+.s3-sub{font-size:40px;font-weight:300;color:var(--p1);margin-top:40px;opacity:0;letter-spacing:8px;text-transform:uppercase}
+.s3-sub.in{animation:fadeUp .6s .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+/* Screen shake */
+.s3.shake{animation:screenShake .3s .18s ease}
+@keyframes screenShake{0%,100%{transform:translate(0)}20%{transform:translate(-8px,5px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
 
-  /* ═══════════════════════════════════════
-     SCENE 1: OPENING
-     ═══════════════════════════════════════ */
-  .s1-text {
-    font-size: 46px;
-    font-weight: 300;
-    color: var(--white);
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    overflow: hidden;
-  }
-  .s1-text .char {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(100%);
-    animation: charReveal 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes charReveal {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .s1-cursor {
-    display: inline-block;
-    width: 3px;
-    height: 46px;
-    background: var(--purple-bright);
-    margin-left: 8px;
-    animation: cursorBlink 0.8s step-end infinite;
-    vertical-align: middle;
-  }
-  @keyframes cursorBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
+/* ═══════════════════════════════════════
+   SCENE 4: STACKED WORDS — Typewriter + scan
+   Each word types in with a scanning beam
+   ═══════════════════════════════════════ */
+.s4{text-align:left;padding:0 120px}
+.s4-row{position:relative;margin-bottom:8px;overflow:hidden}
+.s4-word{font-family:'Space Grotesk',sans-serif;font-size:76px;font-weight:700;text-transform:uppercase;letter-spacing:5px;color:var(--w);opacity:0;display:inline-block}
+.s4-word.in{animation:wordType .01s forwards}
+@keyframes wordType{to{opacity:1}}
+.s4-num{font-size:22px;font-weight:300;color:var(--p1);margin-right:20px;font-family:'Space Grotesk',sans-serif;vertical-align:middle;opacity:0}
+.s4-num.in{animation:numIn .3s ease forwards}
+@keyframes numIn{to{opacity:1}}
+.s4-beam{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--p1);box-shadow:0 0 15px var(--p1),0 0 30px var(--glow);opacity:0;z-index:2}
+.s4-beam.in{animation:beamScan .5s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes beamScan{0%{left:0;opacity:1}100%{left:100%;opacity:0}}
+.s4-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(183,148,246,0.06);z-index:0}
+.s4-fill.in{animation:fillBar .5s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes fillBar{to{width:100%}}
 
-  /* ═══════════════════════════════════════
-     SCENE 2: LOGO REVEAL
-     ═══════════════════════════════════════ */
-  .s2-container { text-align: center; position: relative; }
-  .s2-icon {
-    width: 180px; height: 180px;
-    margin: 0 auto 40px;
-    opacity: 0;
-    transform: scale(0) rotate(-180deg);
-  }
-  .s2-icon.go {
-    animation: logoSpin 1.2s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes logoSpin {
-    0% { opacity: 0; transform: scale(0) rotate(-180deg); }
-    60% { opacity: 1; transform: scale(1.15) rotate(10deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0deg); }
-  }
-  .s2-icon svg { width: 100%; height: 100%; }
-  .s2-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 82px;
-    font-weight: 700;
-    color: var(--white);
-    line-height: 1.05;
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  .s2-title.go {
-    animation: titleSlide 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
-  }
-  @keyframes titleSlide {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .s2-ring {
-    position: absolute;
-    width: 280px; height: 280px;
-    border: 2px solid rgba(123,94,167,0.2);
-    border-radius: 50%;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -60%) scale(0);
-    opacity: 0;
-  }
-  .s2-ring.go {
-    animation: ringExpand 1.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes ringExpand {
-    0% { transform: translate(-50%, -60%) scale(0); opacity: 0; }
-    50% { opacity: 0.6; }
-    100% { transform: translate(-50%, -60%) scale(2.5); opacity: 0; }
-  }
+/* ═══════════════════════════════════════
+   SCENE 5: EVERY VIDEO — 3D rotation in
+   Text rotates in on Y axis like a card flip
+   ═══════════════════════════════════════ */
+.s5{perspective:1200px;text-align:center;padding:0 50px}
+.s5-l1{font-family:'Space Grotesk',sans-serif;font-size:72px;font-weight:700;color:var(--w);line-height:1.15;
+  opacity:0;transform:rotateY(-90deg) translateZ(100px);transform-origin:left center}
+.s5-l1.in{animation:flipIn3D .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes flipIn3D{to{opacity:1;transform:none}}
+.s5-l2{font-family:'Space Grotesk',sans-serif;font-size:88px;font-weight:800;color:var(--p1);line-height:1.1;
+  opacity:0;transform:rotateY(90deg) translateZ(100px);transform-origin:right center;
+  text-shadow:0 0 40px var(--glow),0 0 80px var(--glow2)}
+.s5-l2.in{animation:flipIn3Drev .8s .3s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes flipIn3Drev{to{opacity:1;transform:none}}
+.s5-bar{width:0;height:6px;background:linear-gradient(90deg,var(--p3),var(--p1),var(--p3));margin:30px auto 0;border-radius:3px;box-shadow:0 0 30px var(--glow)}
+.s5-bar.in{animation:barGrow .8s .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes barGrow{to{width:500px}}
 
-  /* ═══════════════════════════════════════
-     SCENE 3: CONTENT CREATION (kinetic)
-     ═══════════════════════════════════════ */
-  .s3-wrap { text-align: center; position: relative; }
-  .s3-headline {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 100px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: -2px;
-    line-height: 1;
-    color: transparent;
-    -webkit-text-stroke: 2px var(--white);
-    opacity: 0;
-    transform: scale(2);
-    filter: blur(20px);
-  }
-  .s3-headline.go {
-    animation: headlineSmash 0.7s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes headlineSmash {
-    to { opacity: 1; transform: scale(1); filter: blur(0); color: var(--white); -webkit-text-stroke: 0px; }
-  }
-  .s3-sub {
-    font-size: 42px;
-    font-weight: 300;
-    color: var(--purple-light);
-    margin-top: 25px;
-    opacity: 0;
-    letter-spacing: 3px;
-  }
-  .s3-sub.go { animation: fadeSlideUp 0.7s 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
-  @keyframes fadeSlideUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .s3-line-accent {
-    width: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--purple-bright), transparent);
-    margin: 30px auto 0;
-  }
-  .s3-line-accent.go {
-    animation: lineGrow 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes lineGrow {
-    to { width: 400px; }
-  }
+/* ═══════════════════════════════════════
+   SCENE 6: INFLUENCER — Morphing blob + reveal
+   Text fades through a morphing shape mask
+   ═══════════════════════════════════════ */
+.s6{text-align:center;padding:0 50px;position:relative}
+.s6 canvas.net{position:absolute;inset:0;z-index:0}
+.s6-content{position:relative;z-index:1}
+.s6-l1{font-family:'Space Grotesk',sans-serif;font-size:60px;font-weight:600;color:var(--w);opacity:0;
+  clip-path:polygon(0 50%,100% 50%,100% 50%,0 50%)}
+.s6-l1.in{animation:splitOpen .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes splitOpen{to{opacity:1;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}}
+.s6-l2{font-family:'Space Grotesk',sans-serif;font-size:60px;font-weight:700;color:var(--p1);opacity:0;transform:scaleX(0);transform-origin:center}
+.s6-l2.in{animation:stretchIn .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes stretchIn{to{opacity:1;transform:scaleX(1)}}
+.s6-l3{font-size:34px;font-weight:300;color:var(--g);margin-top:25px;opacity:0;letter-spacing:2px}
+.s6-l3.in{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
 
-  /* ═══════════════════════════════════════
-     SCENE 4: STACKED WORDS
-     ═══════════════════════════════════════ */
-  .s4-stack { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .s4-word {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 72px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 6px;
-    color: var(--white);
-    opacity: 0;
-    position: relative;
-    overflow: hidden;
-  }
-  .s4-word::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 100%;
-    background: var(--purple);
-    transform: translateX(-105%);
-  }
-  .s4-word.go::before {
-    animation: wordMask 0.6s cubic-bezier(0.7,0,0.3,1) forwards;
-  }
-  @keyframes wordMask {
-    0% { transform: translateX(-105%); }
-    45% { transform: translateX(0%); }
-    55% { transform: translateX(0%); }
-    100% { transform: translateX(105%); }
-  }
-  .s4-word.go {
-    animation: wordAppear 0.6s cubic-bezier(0.7,0,0.3,1) forwards;
-  }
-  @keyframes wordAppear {
-    0% { opacity: 0; }
-    45% { opacity: 0; }
-    46% { opacity: 1; }
-    100% { opacity: 1; }
-  }
-  .s4-word .highlight {
-    position: absolute;
-    left: -10px; top: 50%;
-    width: 6px; height: 6px;
-    background: var(--purple-bright);
-    border-radius: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-    box-shadow: 0 0 15px var(--purple-bright);
-  }
-  .s4-word.go .highlight {
-    animation: dotPop 0.3s 0.55s ease forwards;
-  }
-  @keyframes dotPop {
-    from { opacity: 0; transform: translateY(-50%) scale(0); }
-    to { opacity: 1; transform: translateY(-50%) scale(1); }
-  }
+/* ═══════════════════════════════════════
+   SCENE 7: TRUSTED — Counter-rotate cards
+   Cards fly in from different angles
+   ═══════════════════════════════════════ */
+.s7{text-align:center}
+.s7-head{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:600;color:var(--w);margin-bottom:70px;opacity:0;
+  background:linear-gradient(90deg,var(--w),var(--p1),var(--w));-webkit-background-clip:text;background-clip:text;
+  background-size:200% 100%;-webkit-text-fill-color:transparent}
+.s7-head.in{animation:shimmer 2s ease forwards;opacity:1}
+@keyframes shimmer{0%{background-position:200% 0;opacity:0}30%{opacity:1}100%{background-position:-200% 0;opacity:1}}
+.s7-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:25px 35px;padding:0 70px}
+.s7-c{height:95px;background:var(--card);border:1px solid rgba(183,148,246,0.1);border-radius:18px;
+  display:flex;align-items:center;justify-content:center;opacity:0;position:relative;overflow:hidden}
+.s7-c::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(183,148,246,0.1),transparent 60%);opacity:0;transition:opacity .3s}
+.s7-c.in{opacity:1}
+.s7-c:nth-child(1){animation:cardSpin1 .6s cubic-bezier(.16,1,.3,1) forwards}
+.s7-c:nth-child(2){animation:cardDrop .5s .08s cubic-bezier(.16,1,.3,1) forwards}
+.s7-c:nth-child(3){animation:cardSpin2 .6s .16s cubic-bezier(.16,1,.3,1) forwards}
+.s7-c:nth-child(4){animation:cardSlideL .5s .24s cubic-bezier(.16,1,.3,1) forwards}
+.s7-c:nth-child(5){animation:cardPop .5s .32s cubic-bezier(.16,1,.3,1) forwards}
+.s7-c:nth-child(6){animation:cardSlideR .5s .40s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes cardSpin1{from{opacity:0;transform:rotate(-15deg) translateX(-200px) scale(.5)}to{opacity:1;transform:none}}
+@keyframes cardDrop{from{opacity:0;transform:translateY(-300px) scale(.3)}to{opacity:1;transform:none}}
+@keyframes cardSpin2{from{opacity:0;transform:rotate(15deg) translateX(200px) scale(.5)}to{opacity:1;transform:none}}
+@keyframes cardSlideL{from{opacity:0;transform:translateX(-400px)}to{opacity:1;transform:none}}
+@keyframes cardPop{from{opacity:0;transform:scale(0) rotate(180deg)}to{opacity:1;transform:none}}
+@keyframes cardSlideR{from{opacity:0;transform:translateX(400px)}to{opacity:1;transform:none}}
+.s7-c.in::before{opacity:1}
+.s7-c span{color:var(--g);font-size:20px;font-weight:600;letter-spacing:3px;text-transform:uppercase}
+/* Glow pulse on cards */
+.s7-c.in{animation-fill-mode:forwards}
+.s7-c.glow{box-shadow:0 0 25px rgba(183,148,246,0.15);border-color:rgba(183,148,246,0.3)}
 
-  /* ═══════════════════════════════════════
-     SCENE 5: EVERY VIDEO ENGINEERED
-     ═══════════════════════════════════════ */
-  .s5-wrap { text-align: center; padding: 0 60px; }
-  .s5-l1, .s5-l2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700;
-    font-size: 68px;
-    line-height: 1.2;
-    color: var(--white);
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  .s5-l1.go { animation: clipReveal 0.8s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .s5-l2 {
-    color: var(--purple-bright);
-    font-size: 80px;
-  }
-  .s5-l2.go { animation: clipReveal 0.8s 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
-  @keyframes clipReveal {
-    to { opacity: 1; clip-path: inset(0 0% 0 0); }
-  }
-  .s5-underline {
-    width: 0; height: 4px;
-    background: var(--purple-bright);
-    margin: 20px auto 0;
-    box-shadow: 0 0 20px var(--purple-glow);
-  }
-  .s5-underline.go { animation: lineGrow 0.6s 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+/* ═══════════════════════════════════════
+   SCENE 8: ENGINEER ATTENTION — Zoom-blur-shake
+   Explosive text entrance with camera shake
+   ═══════════════════════════════════════ */
+.s8{text-align:center;padding:0 50px}
+.s8-l1{font-family:'Space Grotesk',sans-serif;font-size:74px;font-weight:800;color:var(--w);line-height:1.15;
+  opacity:0;transform:scale(5);filter:blur(40px)}
+.s8-l1.in{animation:zoomSlam .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes zoomSlam{
+  0%{opacity:0;transform:scale(5);filter:blur(40px)}
+  60%{opacity:1;filter:blur(0);transform:scale(.95)}
+  80%{transform:scale(1.03)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}
+}
+.s8-l2{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:300;font-style:italic;color:var(--p1);margin-top:15px;opacity:0;position:relative}
+.s8-l2 .word-chunk{display:inline-block;opacity:0;transform:translateX(60px);filter:blur(10px)}
+.s8-l2 .word-chunk.in{animation:chunkSlide .4s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes chunkSlide{to{opacity:1;transform:none;filter:none}}
+/* Strikethrough that draws */
+.s8-strike{position:absolute;left:-2%;top:50%;height:4px;width:0;background:var(--p1);box-shadow:0 0 15px var(--p1);transform:translateY(-50%)}
+.s8-strike.in{animation:drawStrike .5s ease forwards}
+@keyframes drawStrike{to{width:104%}}
+.s8.shake{animation:bigShake .35s ease}
+@keyframes bigShake{0%,100%{transform:translate(0)}15%{transform:translate(-12px,8px) rotate(-.5deg)}30%{transform:translate(8px,-6px) rotate(.3deg)}45%{transform:translate(-5px,3px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
 
-  /* ═══════════════════════════════════════
-     SCENE 6: INFLUENCER / NETWORK
-     ═══════════════════════════════════════ */
-  .s6-wrap { text-align: center; padding: 0 50px; position: relative; }
-  #networkCanvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .s6-text { position: relative; z-index: 1; }
-  .s6-l1, .s6-l2, .s6-l3 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-    line-height: 1.3;
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  .s6-l1 { font-size: 58px; color: var(--white); }
-  .s6-l2 { font-size: 58px; color: var(--purple-bright); }
-  .s6-l3 { font-size: 36px; color: var(--grey); font-weight: 300; margin-top: 20px; }
-  .s6-l1.go, .s6-l2.go, .s6-l3.go {
-    animation: popUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes popUp {
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
+/* ═══════════════════════════════════════
+   SCENE 9: CLOSE — Cinematic zoom + pulse
+   Everything assembles with a final glow pulse
+   ═══════════════════════════════════════ */
+.s9{text-align:center}
+.s9-wrap{display:flex;flex-direction:column;align-items:center;gap:30px}
+.s9-slogan{font-family:'Space Grotesk',sans-serif;font-size:60px;font-weight:700;color:var(--w);line-height:1.1;opacity:0}
+.s9-slogan em{font-style:normal;color:var(--p1)}
+.s9-slogan .s-word{display:inline-block;opacity:0;transform:translateY(60px) scale(.5);filter:blur(12px)}
+.s9-slogan .s-word.in{animation:wordPop .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes wordPop{to{opacity:1;transform:none;filter:none}}
+.s9-div{width:0;height:2px;background:linear-gradient(90deg,transparent,var(--p1),transparent);box-shadow:0 0 20px var(--glow)}
+.s9-div.in{animation:divGrow .7s .2s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes divGrow{to{width:400px}}
+.s9-url{font-size:30px;color:var(--g);letter-spacing:3px;opacity:0}
+.s9-url.in{animation:fadeUp .5s .4s cubic-bezier(.16,1,.3,1) forwards}
+.s9-logo{opacity:0;transform:scale(0) rotate(-90deg)}
+.s9-logo.in{animation:logoSpin .8s .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes logoSpin{0%{opacity:0;transform:scale(0) rotate(-90deg)}70%{transform:scale(1.15) rotate(5deg)}100%{opacity:1;transform:none}}
+/* Final glow pulse */
+.s9-pulse{position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;
+  background:radial-gradient(circle,var(--glow),transparent 70%);transform:translate(-50%,-50%);opacity:0;z-index:0}
+.s9-pulse.in{animation:finalPulse 2s .3s ease-out forwards}
+@keyframes finalPulse{0%{width:0;height:0;opacity:.6}50%{opacity:.3}100%{width:1200px;height:1200px;opacity:0}}
 
-  /* ═══════════════════════════════════════
-     SCENE 7: TRUSTED BY BRANDS
-     ═══════════════════════════════════════ */
-  .s7-wrap { text-align: center; }
-  .s7-headline {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 56px;
-    font-weight: 600;
-    color: var(--white);
-    margin-bottom: 70px;
-    opacity: 0;
-  }
-  .s7-headline.go { animation: popUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .s7-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px 40px;
-    padding: 0 80px;
-  }
-  .s7-card {
-    height: 90px;
-    background: var(--dark-card);
-    border: 1px solid rgba(123,94,167,0.15);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transform: translateY(30px) rotateX(15deg);
-    perspective: 800px;
-  }
-  .s7-card.go {
-    animation: cardFlip 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes cardFlip {
-    to { opacity: 1; transform: translateY(0) rotateX(0); }
-  }
-  .s7-card span {
-    color: var(--grey);
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
-  .s7-card:hover {
-    border-color: var(--purple);
-    box-shadow: 0 0 30px var(--purple-glow);
-  }
-
-  /* ═══════════════════════════════════════
-     SCENE 8: WE ENGINEER ATTENTION
-     ═══════════════════════════════════════ */
-  .s8-wrap { text-align: center; padding: 0 60px; }
-  .s8-l1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 70px;
-    font-weight: 800;
-    color: var(--white);
-    line-height: 1.2;
-    opacity: 0;
-    transform: scale(0.5);
-    filter: blur(15px);
-  }
-  .s8-l1.go {
-    animation: dramaticReveal 1s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes dramaticReveal {
-    0% { opacity: 0; transform: scale(0.5); filter: blur(15px); }
-    60% { filter: blur(0); }
-    80% { transform: scale(1.05); }
-    100% { opacity: 1; transform: scale(1); filter: blur(0); }
-  }
-  .s8-l2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 62px;
-    font-weight: 300;
-    color: var(--purple-light);
-    font-style: italic;
-    margin-top: 15px;
-    opacity: 0;
-  }
-  .s8-l2.go {
-    animation: fadeSlideUp 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  .s8-strike {
-    position: relative;
-    display: inline-block;
-  }
-  .s8-strike::after {
-    content: '';
-    position: absolute;
-    left: -5%; bottom: 45%;
-    width: 0; height: 3px;
-    background: var(--purple-bright);
-  }
-  .s8-strike.go::after {
-    animation: strikeThrough 0.4s 1s ease forwards;
-  }
-  @keyframes strikeThrough {
-    to { width: 110%; }
-  }
-
-  /* ═══════════════════════════════════════
-     SCENE 9: CLOSING
-     ═══════════════════════════════════════ */
-  .s9-wrap {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 35px;
-  }
-  .s9-slogan {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 56px;
-    font-weight: 700;
-    color: var(--white);
-    line-height: 1.15;
-    opacity: 0;
-  }
-  .s9-slogan em { color: var(--purple-bright); font-style: normal; }
-  .s9-slogan.go { animation: popUp 0.8s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .s9-url {
-    font-size: 30px;
-    color: var(--grey);
-    letter-spacing: 2px;
-    opacity: 0;
-  }
-  .s9-url.go { animation: fadeSlideUp 0.6s 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .s9-logo {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  .s9-logo.go {
-    animation: logoPop 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  @keyframes logoPop {
-    0% { opacity: 0; transform: scale(0.5); }
-    70% { transform: scale(1.1); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  .s9-divider {
-    width: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--purple), transparent);
-  }
-  .s9-divider.go {
-    animation: lineGrow 0.6s 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
-    width: 0;
-  }
-  @keyframes lineGrow {
-    to { width: 350px; }
-  }
-
-  /* ═══════════════════════════════════════
-     PROGRESS BAR
-     ═══════════════════════════════════════ */
-  .progress-bar {
-    position: absolute;
-    bottom: 0; left: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--purple-deep), var(--purple-bright));
-    z-index: 40;
-    box-shadow: 0 0 15px var(--purple-glow);
-  }
-
-  /* ═══════════════════════════════════════
-     VIEWPORT SCALING
-     ═══════════════════════════════════════ */
-  @media (max-height: 1920px) {
-    .canvas { transform: scale(calc(100vh / 1920)); }
-  }
+/* ═══ PROGRESS ═══ */
+.prog{position:absolute;bottom:0;left:0;height:4px;z-index:95;
+  background:linear-gradient(90deg,var(--p3),var(--p1),var(--p1));
+  box-shadow:0 -2px 15px var(--glow)}
 </style>
 </head>
 <body>
-
-<div class="canvas" id="canvas">
-  <!-- Particles -->
-  <canvas id="particleCanvas" width="1080" height="1920"></canvas>
-
-  <!-- Glow orbs -->
-  <div class="orb orb-1" id="orb1"></div>
-  <div class="orb orb-2" id="orb2"></div>
-  <div class="orb orb-3" id="orb3"></div>
-
-  <!-- Film grain -->
+<div class="C" id="canvas">
+  <canvas class="bg" id="bgCanvas" width="1080" height="1920"></canvas>
   <div class="grain"></div>
+  <div class="vignette"></div>
 
-  <!-- Transition overlays -->
-  <div class="flash-overlay" id="flash"></div>
-  <div class="wipe-overlay" id="wipe"></div>
+  <div class="ov flash" id="flash"></div>
+  <div class="ov wipeH" id="wipeH"></div>
+  <div class="ov wipeV" id="wipeV"></div>
+  <div class="ov shutter" id="shutter"></div>
+  <div class="ov glitchOv" id="glitchOv"></div>
 
-  <!-- Progress -->
-  <div class="progress-bar" id="progressBar"></div>
+  <div class="prog" id="prog"></div>
 
-  <!-- ── SCENE 1: Opening ── -->
-  <div class="scene scene-1" id="scene1">
-    <div class="s1-text" id="s1Text"></div>
+  <!-- Scene 1: Opening -->
+  <div class="S s1" id="sc1">
+    <div id="s1Lines" style="text-align:center"></div>
+    <div class="sub-line" id="s1Sub"></div>
   </div>
 
-  <!-- ── SCENE 2: Logo Reveal ── -->
-  <div class="scene scene-2" id="scene2">
-    <div class="s2-container">
-      <div class="s2-ring" id="s2Ring"></div>
-      <div class="s2-ring" id="s2Ring2" style="animation-delay:0.2s"></div>
+  <!-- Scene 2: Logo -->
+  <div class="S s2" id="sc2">
+    <div class="s2-rays" id="s2Rays">
+      <svg width="600" height="600" viewBox="0 0 600 600"><defs><linearGradient id="rg" x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stop-color="#B794F6" stop-opacity="0.3"/><stop offset="100%" stop-color="#B794F6" stop-opacity="0"/></linearGradient></defs>
+        <g transform="translate(300,300)">
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(0)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(30)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(60)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(90)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(120)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(150)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(180)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(210)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(240)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(270)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(300)"/>
+          <rect x="-2" y="-300" width="4" height="300" fill="url(#rg)" transform="rotate(330)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="s2-ring" id="s2r1"></div>
+    <div class="s2-ring" id="s2r2"></div>
+    <div class="s2-ring" id="s2r3"></div>
+    <div class="s2-logo">
       <div class="s2-icon" id="s2Icon">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#B794F6"/>
-              <stop offset="100%" stop-color="#6B4D8E"/>
-            </linearGradient>
-          </defs>
-          <path d="M100 30 C60 30, 30 60, 30 100 C30 130, 50 155, 80 165 C60 150, 50 130, 50 105 C50 75, 70 55, 100 55 C130 55, 150 75, 150 105 C150 125, 140 140, 125 150 C155 140, 170 120, 170 95 C170 60, 140 30, 100 30Z" fill="url(#g1)"/>
-          <path d="M100 75 C85 75, 72 88, 72 105 C72 120, 82 132, 96 136 C88 130, 84 120, 84 108 C84 95, 92 85, 104 83 C112 82, 120 86, 125 93 C120 82, 112 75, 100 75Z" fill="url(#g1)" opacity="0.6"/>
+          <defs><linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#B794F6"/><stop offset="100%" stop-color="#6B4D8E"/></linearGradient></defs>
+          <path d="M100 30 C60 30,30 60,30 100 C30 130,50 155,80 165 C60 150,50 130,50 105 C50 75,70 55,100 55 C130 55,150 75,150 105 C150 125,140 140,125 150 C155 140,170 120,170 95 C170 60,140 30,100 30Z" fill="url(#lg1)"/>
+          <path d="M100 75 C85 75,72 88,72 105 C72 120,82 132,96 136 C88 130,84 120,84 108 C84 95,92 85,104 83 C112 82,120 86,125 93 C120 82,112 75,100 75Z" fill="url(#lg1)" opacity="0.6"/>
         </svg>
       </div>
-      <div class="s2-title" id="s2Title">The Social<br>Creed</div>
+      <div class="s2-txt" id="s2Txt"></div>
     </div>
   </div>
 
-  <!-- ── SCENE 3: Content Creation ── -->
-  <div class="scene scene-3" id="scene3">
-    <div class="s3-wrap">
-      <div class="s3-headline" id="s3Head">CONTENT<br>CREATION</div>
-      <div class="s3-sub" id="s3Sub">Built to win attention</div>
-      <div class="s3-line-accent" id="s3Line"></div>
+  <!-- Scene 3: Content Creation -->
+  <div class="S s3" id="sc3">
+    <div class="s3-top" id="s3Top">CONTENT</div>
+    <div class="s3-impact" id="s3Impact"></div>
+    <div class="s3-bot" id="s3Bot">CREATION</div>
+    <div class="s3-sub" id="s3Sub">Built to win attention</div>
+  </div>
+
+  <!-- Scene 4: Stacked Words -->
+  <div class="S s4" id="sc4">
+    <div class="s4-row" id="r1"><span class="s4-num" id="n1">01</span><span class="s4-word" id="w1">Ideas</span><div class="s4-beam" id="bm1"></div><div class="s4-fill" id="fl1"></div></div>
+    <div class="s4-row" id="r2"><span class="s4-num" id="n2">02</span><span class="s4-word" id="w2">Scripts</span><div class="s4-beam" id="bm2"></div><div class="s4-fill" id="fl2"></div></div>
+    <div class="s4-row" id="r3"><span class="s4-num" id="n3">03</span><span class="s4-word" id="w3">Production</span><div class="s4-beam" id="bm3"></div><div class="s4-fill" id="fl3"></div></div>
+    <div class="s4-row" id="r4"><span class="s4-num" id="n4">04</span><span class="s4-word" id="w4">Editing</span><div class="s4-beam" id="bm4"></div><div class="s4-fill" id="fl4"></div></div>
+    <div class="s4-row" id="r5"><span class="s4-num" id="n5">05</span><span class="s4-word" id="w5">Distribution</span><div class="s4-beam" id="bm5"></div><div class="s4-fill" id="fl5"></div></div>
+  </div>
+
+  <!-- Scene 5: Every Video -->
+  <div class="S s5" id="sc5">
+    <div class="s5-l1" id="s5L1">Every video engineered</div>
+    <div class="s5-l2" id="s5L2">to stand out</div>
+    <div class="s5-bar" id="s5Bar"></div>
+  </div>
+
+  <!-- Scene 6: Influencer -->
+  <div class="S s6" id="sc6">
+    <canvas class="net" id="netCanvas" width="1080" height="1920"></canvas>
+    <div class="s6-content">
+      <div class="s6-l1" id="s6L1">Amplified through</div>
+      <div class="s6-l2" id="s6L2">trusted industry voices</div>
+      <div class="s6-l3" id="s6L3">from niche creators to major names</div>
     </div>
   </div>
 
-  <!-- ── SCENE 4: Stacked Words ── -->
-  <div class="scene scene-4" id="scene4">
-    <div class="s4-stack">
-      <div class="s4-word" id="w1"><span class="highlight"></span>Ideas</div>
-      <div class="s4-word" id="w2"><span class="highlight"></span>Scripts</div>
-      <div class="s4-word" id="w3"><span class="highlight"></span>Production</div>
-      <div class="s4-word" id="w4"><span class="highlight"></span>Editing</div>
-      <div class="s4-word" id="w5"><span class="highlight"></span>Distribution</div>
+  <!-- Scene 7: Trusted -->
+  <div class="S s7" id="sc7">
+    <div class="s7-head" id="s7Head">Trusted by leading brands</div>
+    <div class="s7-grid" id="s7Grid">
+      <div class="s7-c" id="c1"><span>Brand</span></div>
+      <div class="s7-c" id="c2"><span>Brand</span></div>
+      <div class="s7-c" id="c3"><span>Brand</span></div>
+      <div class="s7-c" id="c4"><span>Brand</span></div>
+      <div class="s7-c" id="c5"><span>Brand</span></div>
+      <div class="s7-c" id="c6"><span>Brand</span></div>
     </div>
   </div>
 
-  <!-- ── SCENE 5: Every Video Engineered ── -->
-  <div class="scene scene-5" id="scene5">
-    <div class="s5-wrap">
-      <div class="s5-l1" id="s5L1">Every video engineered</div>
-      <div class="s5-l2" id="s5L2">to stand out</div>
-      <div class="s5-underline" id="s5Line"></div>
+  <!-- Scene 8: Belief -->
+  <div class="S s8" id="sc8">
+    <div class="s8-l1" id="s8L1">We engineer attention.</div>
+    <div class="s8-l2" id="s8L2Wrap">
+      <span id="s8L2"></span>
+      <div class="s8-strike" id="s8Strike"></div>
     </div>
   </div>
 
-  <!-- ── SCENE 6: Influencer Marketing ── -->
-  <div class="scene scene-6" id="scene6">
-    <canvas id="networkCanvas" width="1080" height="1920"></canvas>
-    <div class="s6-wrap">
-      <div class="s6-text">
-        <div class="s6-l1" id="s6L1">Amplified through</div>
-        <div class="s6-l2" id="s6L2">trusted industry voices</div>
-        <div class="s6-l3" id="s6L3">from niche creators to major names</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SCENE 7: Trusted by Brands ── -->
-  <div class="scene scene-7" id="scene7">
-    <div class="s7-wrap">
-      <div class="s7-headline" id="s7Head">Trusted by leading brands</div>
-      <div class="s7-grid">
-        <div class="s7-card" id="b1"><span>Brand</span></div>
-        <div class="s7-card" id="b2"><span>Brand</span></div>
-        <div class="s7-card" id="b3"><span>Brand</span></div>
-        <div class="s7-card" id="b4"><span>Brand</span></div>
-        <div class="s7-card" id="b5"><span>Brand</span></div>
-        <div class="s7-card" id="b6"><span>Brand</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SCENE 8: We Engineer Attention ── -->
-  <div class="scene scene-8" id="scene8">
-    <div class="s8-wrap">
-      <div class="s8-l1" id="s8L1">We engineer attention.</div>
-      <div class="s8-l2" id="s8L2"><span class="s8-strike" id="s8Strike">Not just posts.</span></div>
-    </div>
-  </div>
-
-  <!-- ── SCENE 9: Close ── -->
-  <div class="scene scene-9" id="scene9">
+  <!-- Scene 9: Close -->
+  <div class="S s9" id="sc9">
+    <div class="s9-pulse" id="s9Pulse"></div>
     <div class="s9-wrap">
-      <div class="s9-slogan" id="s9Slogan">Your Brand.<br><em>Our Gospel.</em></div>
-      <div class="s9-divider" id="s9Div"></div>
+      <div class="s9-slogan" id="s9Slogan"></div>
+      <div class="s9-div" id="s9Div"></div>
       <div class="s9-url" id="s9Url">www.thesocialcreed.com</div>
       <div class="s9-logo" id="s9Logo">
         <svg width="90" height="90" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#B794F6"/>
-              <stop offset="100%" stop-color="#6B4D8E"/>
-            </linearGradient>
-          </defs>
-          <path d="M100 30 C60 30, 30 60, 30 100 C30 130, 50 155, 80 165 C60 150, 50 130, 50 105 C50 75, 70 55, 100 55 C130 55, 150 75, 150 105 C150 125, 140 140, 125 150 C155 140, 170 120, 170 95 C170 60, 140 30, 100 30Z" fill="url(#g2)"/>
-          <path d="M100 75 C85 75, 72 88, 72 105 C72 120, 82 132, 96 136 C88 130, 84 120, 84 108 C84 95, 92 85, 104 83 C112 82, 120 86, 125 93 C120 82, 112 75, 100 75Z" fill="url(#g2)" opacity="0.6"/>
+          <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#B794F6"/><stop offset="100%" stop-color="#6B4D8E"/></linearGradient></defs>
+          <path d="M100 30 C60 30,30 60,30 100 C30 130,50 155,80 165 C60 150,50 130,50 105 C50 75,70 55,100 55 C130 55,150 75,150 105 C150 125,140 140,125 150 C155 140,170 120,170 95 C170 60,140 30,100 30Z" fill="url(#lg2)"/>
+          <path d="M100 75 C85 75,72 88,72 105 C72 120,82 132,96 136 C88 130,84 120,84 108 C84 95,92 85,104 83 C112 82,120 86,125 93 C120 82,112 75,100 75Z" fill="url(#lg2)" opacity="0.6"/>
         </svg>
       </div>
     </div>
@@ -750,280 +407,276 @@
 
 <script>
 // ═══════════════════════════════════════
-// PARTICLE SYSTEM
+// BACKGROUND: Particles + energy waves
 // ═══════════════════════════════════════
-const pCanvas = document.getElementById('particleCanvas');
-const pCtx = pCanvas.getContext('2d');
-const particles = [];
-
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * 1080;
-    this.y = Math.random() * 1920;
-    this.size = Math.random() * 2.5 + 0.5;
-    this.speedX = (Math.random() - 0.5) * 0.8;
-    this.speedY = (Math.random() - 0.5) * 0.8;
-    this.opacity = Math.random() * 0.4 + 0.1;
-    this.pulse = Math.random() * Math.PI * 2;
+const bg = document.getElementById('bgCanvas').getContext('2d');
+const pts = [];
+class Pt {
+  constructor(){this.reset(true)}
+  reset(init){
+    this.x=Math.random()*1080; this.y=init?Math.random()*1920:-10;
+    this.s=Math.random()*2+.5; this.vx=(Math.random()-.5)*.6;
+    this.vy=Math.random()*.5+.2; this.a=Math.random()*.35+.1;
+    this.pulse=Math.random()*Math.PI*2; this.life=1;
   }
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    this.pulse += 0.02;
-    if (this.x < 0 || this.x > 1080 || this.y < 0 || this.y > 1920) this.reset();
+  update(){
+    this.x+=this.vx; this.y+=this.vy; this.pulse+=.02;
+    if(this.y>1930||this.x<-10||this.x>1090) this.reset(false);
   }
-  draw() {
-    const o = this.opacity * (0.5 + Math.sin(this.pulse) * 0.5);
-    pCtx.beginPath();
-    pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    pCtx.fillStyle = `rgba(157, 127, 202, ${o})`;
-    pCtx.fill();
+  draw(){
+    const o=this.a*(0.5+Math.sin(this.pulse)*0.5);
+    bg.beginPath(); bg.arc(this.x,this.y,this.s,0,Math.PI*2);
+    bg.fillStyle=`rgba(183,148,246,${o})`; bg.fill();
+    // Glow
+    bg.beginPath(); bg.arc(this.x,this.y,this.s*4,0,Math.PI*2);
+    bg.fillStyle=`rgba(183,148,246,${o*0.08})`; bg.fill();
   }
 }
-for (let i = 0; i < 80; i++) particles.push(new Particle());
+for(let i=0;i<100;i++) pts.push(new Pt());
 
-function drawParticles() {
-  pCtx.clearRect(0, 0, 1080, 1920);
-  particles.forEach(p => { p.update(); p.draw(); });
-  // Draw connections
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x;
-      const dy = particles[i].y - particles[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 120) {
-        pCtx.beginPath();
-        pCtx.moveTo(particles[i].x, particles[i].y);
-        pCtx.lineTo(particles[j].x, particles[j].y);
-        pCtx.strokeStyle = `rgba(123, 94, 167, ${0.08 * (1 - dist / 120)})`;
-        pCtx.lineWidth = 0.5;
-        pCtx.stroke();
-      }
-    }
-  }
-  requestAnimationFrame(drawParticles);
-}
-drawParticles();
-
-// ═══════════════════════════════════════
-// NETWORK ANIMATION (Scene 6)
-// ═══════════════════════════════════════
-const nCanvas = document.getElementById('networkCanvas');
-const nCtx = nCanvas.getContext('2d');
-let networkActive = false;
-const nodes = [];
-
-class Node {
-  constructor() {
-    this.x = Math.random() * 1080;
-    this.y = Math.random() * 1920;
-    this.targetX = this.x;
-    this.targetY = this.y;
-    this.size = Math.random() * 5 + 2;
-    this.pulse = Math.random() * Math.PI * 2;
-  }
-  update() {
-    this.pulse += 0.03;
-    this.x += (this.targetX - this.x) * 0.02;
-    this.y += (this.targetY - this.y) * 0.02;
-    if (Math.random() < 0.005) {
-      this.targetX = Math.random() * 1080;
-      this.targetY = Math.random() * 1920;
-    }
-  }
-  draw() {
-    const glow = 0.4 + Math.sin(this.pulse) * 0.3;
-    nCtx.beginPath();
-    nCtx.arc(this.x, this.y, this.size + Math.sin(this.pulse) * 2, 0, Math.PI * 2);
-    nCtx.fillStyle = `rgba(183, 148, 246, ${glow})`;
-    nCtx.fill();
-    nCtx.beginPath();
-    nCtx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
-    nCtx.fillStyle = `rgba(255, 255, 255, ${glow * 0.8})`;
-    nCtx.fill();
-  }
-}
-for (let i = 0; i < 25; i++) nodes.push(new Node());
-
-function drawNetwork() {
-  if (!networkActive) { requestAnimationFrame(drawNetwork); return; }
-  nCtx.clearRect(0, 0, 1080, 1920);
-  // Connections
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const dx = nodes[i].x - nodes[j].x;
-      const dy = nodes[i].y - nodes[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 300) {
-        const alpha = 0.15 * (1 - dist / 300);
-        nCtx.beginPath();
-        nCtx.moveTo(nodes[i].x, nodes[i].y);
-        nCtx.lineTo(nodes[j].x, nodes[j].y);
-        nCtx.strokeStyle = `rgba(123, 94, 167, ${alpha})`;
-        nCtx.lineWidth = 1;
-        nCtx.stroke();
-      }
-    }
-  }
-  nodes.forEach(n => { n.update(); n.draw(); });
-  requestAnimationFrame(drawNetwork);
-}
-drawNetwork();
-
-// ═══════════════════════════════════════
-// SCENE MANAGEMENT
-// ═══════════════════════════════════════
-let currentScene = null;
-
-function transitionTo(sceneId, enterAnim, exitAnim) {
-  const next = document.getElementById(sceneId);
-  if (currentScene) {
-    const prev = currentScene;
-    prev.className = `scene ${prev.dataset.cls || ''} ${exitAnim}`;
-    setTimeout(() => { prev.style.display = 'none'; prev.className = `scene ${prev.dataset.cls || ''}`; prev.style.opacity = 0; }, 500);
-  }
-  next.style.display = 'flex';
-  next.className = `scene ${next.dataset.cls || ''} ${enterAnim}`;
-  currentScene = next;
-}
-
-function fireFlash() {
-  const f = document.getElementById('flash');
-  f.classList.remove('fire');
-  void f.offsetWidth;
-  f.classList.add('fire');
-}
-
-function fireWipe() {
-  const w = document.getElementById('wipe');
-  w.classList.remove('fire');
-  void w.offsetWidth;
-  w.classList.add('fire');
-}
-
-function go(id) { document.getElementById(id).classList.add('go'); }
-
-// Character-by-character text reveal
-function typeText(containerId, text, charDelay) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  [...text].forEach((char, i) => {
-    const span = document.createElement('span');
-    span.className = 'char';
-    span.textContent = char === ' ' ? '\u00A0' : char;
-    span.style.animationDelay = `${i * charDelay}ms`;
-    container.appendChild(span);
+// Energy wave
+let waveT=0;
+function drawBg(){
+  bg.clearRect(0,0,1080,1920);
+  // Ambient glow orbs
+  const t=Date.now()/1000;
+  [{x:200+Math.sin(t*.3)*150,y:400+Math.cos(t*.2)*200,r:300,o:.12},
+   {x:880+Math.sin(t*.25)*100,y:1500+Math.cos(t*.35)*150,r:250,o:.08},
+   {x:540+Math.sin(t*.4)*200,y:960+Math.cos(t*.3)*100,r:200,o:.06}
+  ].forEach(orb=>{
+    const g=bg.createRadialGradient(orb.x,orb.y,0,orb.x,orb.y,orb.r);
+    g.addColorStop(0,`rgba(123,94,167,${orb.o})`); g.addColorStop(1,'transparent');
+    bg.fillStyle=g; bg.fillRect(orb.x-orb.r,orb.y-orb.r,orb.r*2,orb.r*2);
   });
-  // Add cursor
-  const cursor = document.createElement('span');
-  cursor.className = 's1-cursor';
-  container.appendChild(cursor);
+  // Particles
+  pts.forEach(p=>{p.update();p.draw()});
+  // Connections
+  for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+    const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<100){bg.beginPath();bg.moveTo(pts[i].x,pts[i].y);bg.lineTo(pts[j].x,pts[j].y);
+      bg.strokeStyle=`rgba(123,94,167,${.06*(1-d/100)})`;bg.lineWidth=.5;bg.stroke();}
+  }
+  // Horizontal energy wave
+  waveT+=.015;
+  bg.beginPath();
+  for(let x=0;x<1080;x++){
+    const y=960+Math.sin(x*.008+waveT)*80+Math.sin(x*.015+waveT*1.5)*40;
+    x===0?bg.moveTo(x,y):bg.lineTo(x,y);
+  }
+  bg.strokeStyle='rgba(183,148,246,0.04)';bg.lineWidth=2;bg.stroke();
+
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ═══════════════════════════════════════
+// NETWORK CANVAS (Scene 6)
+// ═══════════════════════════════════════
+const nc=document.getElementById('netCanvas').getContext('2d');
+const nodes=[];let netOn=false;
+class Nd{
+  constructor(){this.x=Math.random()*1080;this.y=Math.random()*1920;this.tx=this.x;this.ty=this.y;
+    this.sz=Math.random()*5+2;this.p=Math.random()*Math.PI*2;}
+  update(){this.p+=.03;this.x+=(this.tx-this.x)*.02;this.y+=(this.ty-this.y)*.02;
+    if(Math.random()<.005){this.tx=Math.random()*1080;this.ty=Math.random()*1920;}}
+  draw(){const g=.4+Math.sin(this.p)*.3;
+    nc.beginPath();nc.arc(this.x,this.y,this.sz+Math.sin(this.p)*2,0,Math.PI*2);
+    nc.fillStyle=`rgba(183,148,246,${g})`;nc.fill();
+    nc.beginPath();nc.arc(this.x,this.y,this.sz*.4,0,Math.PI*2);
+    nc.fillStyle=`rgba(255,255,255,${g*.7})`;nc.fill();
+    // Outer glow
+    nc.beginPath();nc.arc(this.x,this.y,this.sz*3,0,Math.PI*2);
+    nc.fillStyle=`rgba(183,148,246,${g*.06})`;nc.fill();
+  }
+}
+for(let i=0;i<30;i++) nodes.push(new Nd());
+function drawNet(){
+  if(!netOn){nc.clearRect(0,0,1080,1920);requestAnimationFrame(drawNet);return;}
+  nc.clearRect(0,0,1080,1920);
+  for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+    const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<350){nc.beginPath();nc.moveTo(nodes[i].x,nodes[i].y);nc.lineTo(nodes[j].x,nodes[j].y);
+      nc.strokeStyle=`rgba(123,94,167,${.12*(1-d/350)})`;nc.lineWidth=1;nc.stroke();}
+  }
+  nodes.forEach(n=>{n.update();n.draw()});
+  requestAnimationFrame(drawNet);
+}
+drawNet();
+
+// ═══════════════════════════════════════
+// ENGINE
+// ═══════════════════════════════════════
+const $=id=>document.getElementById(id);
+let cur=null;
+
+function show(id,exit){
+  const el=$(id);
+  if(cur){const p=cur;p.classList.add('out');setTimeout(()=>{p.classList.remove('on','out');p.style.display='none';},400);}
+  el.style.display='flex';
+  requestAnimationFrame(()=>{el.classList.add('on');});
+  cur=el;
+}
+
+function fire(id){const e=$(id);e.classList.remove('go');void e.offsetWidth;e.classList.add('go');}
+function go(id){$(id).classList.add('in');}
+
+// Scene 1: Glitch chars
+function glitchText(containerId,text){
+  const c=$(containerId);c.innerHTML='';
+  const words=text.split(' ');
+  words.forEach((word,wi)=>{
+    const wd=document.createElement('span');wd.className='word';
+    [...word].forEach((ch,ci)=>{
+      const s=document.createElement('span');s.className='ch';s.textContent=ch;
+      const delay=(wi*word.length+ci)*70;
+      setTimeout(()=>s.classList.add('in'),delay);
+      wd.appendChild(s);
+    });
+    c.appendChild(wd);
+  });
+  const cursor=document.createElement('span');cursor.className='cursor';c.appendChild(cursor);
+}
+
+// Scene 2: Letter-by-letter flip
+function flipLetters(containerId,text){
+  const c=$(containerId);c.innerHTML='';c.style.opacity='1';
+  const lines=text.split('\n');
+  lines.forEach((line,li)=>{
+    [...line].forEach((ch,ci)=>{
+      const s=document.createElement('span');s.className='letter';
+      s.textContent=ch===' '?'\u00A0':ch;
+      s.style.animationDelay=`${(li*10+ci)*50}ms`;
+      setTimeout(()=>s.classList.add('in'),(li*10+ci)*50);
+      c.appendChild(s);
+    });
+    if(li<lines.length-1) c.appendChild(document.createElement('br'));
+  });
+}
+
+// Scene 4: Scan reveal
+function scanWord(n,idx){
+  const num='n'+n, word='w'+n, beam='bm'+n, fill='fl'+n;
+  setTimeout(()=>{go(num);go(beam);go(fill);setTimeout(()=>go(word),250);},idx*550);
+}
+
+// Scene 8: Word chunks
+function chunkReveal(containerId,text){
+  const c=$(containerId);c.innerHTML='';
+  text.split(' ').forEach((w,i)=>{
+    const s=document.createElement('span');s.className='word-chunk';s.textContent=w+' ';
+    s.style.animationDelay=`${i*120}ms`;
+    setTimeout(()=>s.classList.add('in'),i*120);
+    c.appendChild(s);
+  });
+}
+
+// Scene 9: Word pop
+function wordPop(containerId,html){
+  const c=$(containerId);c.innerHTML=html;c.style.opacity='1';
+  const temp=document.createElement('div');temp.innerHTML=html;
+  c.innerHTML='';
+  const processNode=(node)=>{
+    if(node.nodeType===3){
+      node.textContent.split(' ').filter(w=>w).forEach((w,i)=>{
+        const s=document.createElement('span');s.className='s-word';s.textContent=w+' ';
+        c.appendChild(s);
+      });
+    } else if(node.nodeName==='BR'){
+      c.appendChild(document.createElement('br'));
+    } else if(node.nodeName==='EM'){
+      const em=document.createElement('em');
+      node.textContent.split(' ').filter(w=>w).forEach(w=>{
+        const s=document.createElement('span');s.className='s-word';s.textContent=w+' ';
+        em.appendChild(s);
+      });
+      c.appendChild(em);
+    }
+  };
+  temp.childNodes.forEach(processNode);
+  c.querySelectorAll('.s-word').forEach((w,i)=>{
+    setTimeout(()=>w.classList.add('in'),i*100);
+  });
 }
 
 // ═══════════════════════════════════════
-// TIMELINE
+// TIMELINE — 41s
 // ═══════════════════════════════════════
-const TOTAL = 41000;
-const TL = [
-  // ── Scene 1: Opening [0:00–0:03] ──
-  [0, () => {
-    document.querySelectorAll('.orb').forEach(o => o.classList.add('on'));
-    transitionTo('scene1', 'enter-fade', '');
-  }],
-  [500, () => typeText('s1Text', 'A new chapter begins.', 60)],
+const TOTAL=41000;
+const TL=[
+  // ── Scene 1 [0:00-0:03]: Glitch character reveal ──
+  [0,()=>show('sc1')],
+  [300,()=>glitchText('s1Lines','A new chapter begins.')],
+  [1800,()=>go('s1Sub')],
 
-  // ── Scene 2: Logo Reveal [0:04–0:07] ──
-  [3200, () => fireFlash()],
-  [3500, () => transitionTo('scene2', 'enter-zoom', 'exit-blur')],
-  [3700, () => { go('s2Ring'); go('s2Ring2'); }],
-  [3900, () => go('s2Icon')],
-  [4400, () => go('s2Title')],
+  // ── Scene 2 [0:04-0:07]: Explosive logo burst ──
+  [3200,()=>{fire('flash');fire('glitchOv');}],
+  [3500,()=>show('sc2')],
+  [3600,()=>{go('s2Rays');go('s2r1');}],
+  [3700,()=>go('s2r2')],
+  [3800,()=>{go('s2r3');go('s2Icon');}],
+  [4300,()=>flipLetters('s2Txt','The Social\nCreed')],
 
-  // ── Scene 3: Content Creation [0:08–0:13] ──
-  [7200, () => fireWipe()],
-  [7700, () => transitionTo('scene3', 'enter-glitch', 'exit-zoom')],
-  [7900, () => go('s3Head')],
-  [8500, () => go('s3Sub')],
-  [8800, () => go('s3Line')],
+  // ── Scene 3 [0:08-0:13]: Split slam with screen shake ──
+  [7200,()=>fire('wipeH')],
+  [7600,()=>{show('sc3');$('sc3').classList.add('shake');}],
+  [7700,()=>go('s3Top')],
+  [7850,()=>{go('s3Bot');go('s3Impact');}],
+  [8400,()=>go('s3Sub')],
 
-  // ── Scene 4: Stacked Words [0:14–0:18] ──
-  [13200, () => fireFlash()],
-  [13500, () => transitionTo('scene4', 'enter-fade', 'exit-blur')],
-  [13700, () => go('w1')],
-  [14300, () => go('w2')],
-  [14900, () => go('w3')],
-  [15500, () => go('w4')],
-  [16100, () => go('w5')],
+  // ── Scene 4 [0:14-0:18]: Scanning beam typewriter ──
+  [13200,()=>fire('wipeV')],
+  [13600,()=>show('sc4')],
+  [13800,()=>{for(let i=1;i<=5;i++) scanWord(i,i-1);}],
 
-  // ── Scene 5: Strategic Angle [0:19–0:23] ──
-  [18200, () => fireWipe()],
-  [18600, () => transitionTo('scene5', 'enter-slide-up', 'exit-fade')],
-  [18800, () => go('s5L1')],
-  [19300, () => go('s5L2')],
-  [19800, () => go('s5Line')],
+  // ── Scene 5 [0:19-0:23]: 3D card-flip text ──
+  [18200,()=>fire('shutter')],
+  [18500,()=>show('sc5')],
+  [18700,()=>go('s5L1')],
+  [19200,()=>go('s5L2')],
+  [19700,()=>go('s5Bar')],
 
-  // ── Scene 6: Influencer Marketing [0:24–0:28] ──
-  [23200, () => fireFlash()],
-  [23500, () => { networkActive = true; transitionTo('scene6', 'enter-zoom', 'exit-blur'); }],
-  [23800, () => go('s6L1')],
-  [24300, () => go('s6L2')],
-  [24900, () => go('s6L3')],
+  // ── Scene 6 [0:24-0:28]: Network graph + split reveal ──
+  [23200,()=>{fire('flash');fire('glitchOv');}],
+  [23500,()=>{netOn=true;show('sc6');}],
+  [23700,()=>go('s6L1')],
+  [24200,()=>go('s6L2')],
+  [24800,()=>go('s6L3')],
 
-  // ── Scene 7: Trusted by Brands [0:29–0:33] ──
-  [28200, () => { networkActive = false; fireWipe(); }],
-  [28600, () => transitionTo('scene7', 'enter-slide-up', 'exit-fade')],
-  [28800, () => go('s7Head')],
-  [29200, () => go('b1')],
-  [29400, () => go('b2')],
-  [29600, () => go('b3')],
-  [29800, () => go('b4')],
-  [30000, () => go('b5')],
-  [30200, () => go('b6')],
+  // ── Scene 7 [0:29-0:33]: Cards from all directions ──
+  [28200,()=>{netOn=false;fire('wipeH');}],
+  [28600,()=>show('sc7')],
+  [28700,()=>go('s7Head')],
+  [29100,()=>{['c1','c2','c3','c4','c5','c6'].forEach(id=>go(id));}],
+  [30000,()=>{['c1','c2','c3','c4','c5','c6'].forEach(id=>$(id).classList.add('glow'));}],
 
-  // ── Scene 8: Brand Belief [0:34–0:38] ──
-  [33200, () => fireFlash()],
-  [33600, () => transitionTo('scene8', 'enter-fade', 'exit-zoom')],
-  [33800, () => go('s8L1')],
-  [34500, () => go('s8L2')],
-  [35000, () => go('s8Strike')],
+  // ── Scene 8 [0:34-0:38]: Zoom slam + shake ──
+  [33200,()=>fire('flash')],
+  [33500,()=>{show('sc8');$('sc8').classList.add('shake');}],
+  [33600,()=>go('s8L1')],
+  [34400,()=>chunkReveal('s8L2','Not just posts.')],
+  [35200,()=>go('s8Strike')],
 
-  // ── Scene 9: Close [0:39–0:41] ──
-  [38200, () => fireWipe()],
-  [38600, () => transitionTo('scene9', 'enter-zoom', 'exit-blur')],
-  [38800, () => go('s9Slogan')],
-  [39200, () => go('s9Div')],
-  [39500, () => go('s9Url')],
-  [39800, () => go('s9Logo')],
+  // ── Scene 9 [0:39-0:41]: Cinematic close ──
+  [38200,()=>fire('wipeV')],
+  [38500,()=>{show('sc9');go('s9Pulse');}],
+  [38700,()=>wordPop('s9Slogan','Your Brand. <br><em>Our Gospel.</em>')],
+  [39300,()=>go('s9Div')],
+  [39600,()=>go('s9Url')],
+  [39900,()=>go('s9Logo')],
 ];
 
-let startTime = null;
-const ran = new Set();
-
-function tick(ts) {
-  if (!startTime) startTime = ts;
-  const elapsed = ts - startTime;
-
-  // Progress
-  document.getElementById('progressBar').style.width = Math.min(elapsed / TOTAL * 100, 100) + '%';
-
-  TL.forEach(([t, fn], i) => {
-    if (elapsed >= t && !ran.has(i)) { ran.add(i); fn(); }
-  });
-
-  if (elapsed < TOTAL) requestAnimationFrame(tick);
+document.querySelectorAll('.S').forEach(s=>{s.style.display='none'});
+let t0=null;const ran=new Set();
+function tick(ts){
+  if(!t0) t0=ts;
+  const e=ts-t0;
+  $('prog').style.width=Math.min(e/TOTAL*100,100)+'%';
+  TL.forEach(([t,fn],i)=>{if(e>=t&&!ran.has(i)){ran.add(i);fn();}});
+  if(e<TOTAL) requestAnimationFrame(tick);
 }
-
-// Hide all scenes initially
-document.querySelectorAll('.scene').forEach(s => { s.style.display = 'none'; s.style.opacity = 0; });
-
-function begin() {
-  document.removeEventListener('click', begin);
-  requestAnimationFrame(tick);
-}
-setTimeout(begin, 800);
-document.addEventListener('click', begin);
+function start(){document.removeEventListener('click',start);requestAnimationFrame(tick);}
+setTimeout(start,600);
+document.addEventListener('click',start);
 </script>
-
 </body>
 </html>
